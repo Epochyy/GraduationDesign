@@ -1,2 +1,2 @@
 # graduationDesign
-## PyQt5 + OpenGL
+### PyQt5 + OpenGL

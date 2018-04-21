@@ -6,7 +6,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QOpenGLWidget, QSlider, QWidget, QHBoxLayout
+from PyQt5.QtWidgets import QOpenGLWidget, QSlider, QWidget, QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QSize
 from PyQt5.QtGui import QColor
 
@@ -22,8 +22,8 @@ class neurons(QOpenGLWidget):
         self.yRot = 0
         self.zRot = 0
         self.lastPos = QPoint()
-        self.trolltechGreen = QColor.fromCmykF(0.40, 0.0, 1.0, 0.0)
-        self.trolltechPurple = QColor.fromCmykF(0.39, 0.39, 0.0, 0.0)
+        self.color=[(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
+        self.coords=0
 
     def minimumSizeHint(self):
         return QSize(50, 50)
@@ -32,32 +32,32 @@ class neurons(QOpenGLWidget):
         return QSize(400, 400)
 
     def initializeGL(self):
-        self.neuron = self.loaddata('../src/data/CA228.CNG.swc')
+        # 数据中有两个根房室如何解决？？？
+        self.neuron = self.loaddata('../src/data/Series003_cmle.CNG.swc')
         lightPos = (5.0, 5.0, 10.0, 1.0)
         glLightfv(GL_LIGHT0, GL_POSITION, lightPos)
-        glEnable(GL_LIGHTING)
-        glEnable(GL_LIGHT0)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_NORMALIZE)
         glShadeModel(GL_FLAT)
         glClearColor(0.0, 0.0, 0.0, 1.0)
-        glPushMatrix()
-        # self.draw()
         self.object = self.makeObject()
-        glPopMatrix()
-        # self.Reshape()
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glLoadIdentity()
+        glColor3f(1.0, 0.0, 0.0)
         glCallList(self.object)
+        glFlush()
 
     def resizeGL(self, width, height):
         glViewport(0,0,width,height)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glColor3f(1.0, 0.0, 0.0)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(-100, 100, -100, 100, -100, 100)
+        glOrtho(-1*self.coords, self.coords, -1*self.coords, self.coords, -1*self.coords, self.coords)
         glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
 
     # 加载数据
     def loaddata(self, filepath):
@@ -87,11 +87,14 @@ class neurons(QOpenGLWidget):
     def makeObject(self):
         genList = glGenLists(1)
         glNewList(genList, GL_COMPILE)
-        glClear(GL_COLOR_BUFFER_BIT)
-        glColor3f(0.0, 1.0, 0.0)
         length = len(self.neuron)
+        k = 0
+        glColor3f(1.0, 0.0, 0.0)
         i = 1
         while i < length:
+            self.coords = max(self.coords,self.neuron[i][1])
+            self.coords = max(self.coords,self.neuron[i][2])
+            self.coords = max(self.coords,self.neuron[i][3])
             if self.neuron[i][0] == 1:
                 glPushMatrix()
                 glTranslatef(self.neuron[i][1], self.neuron[i][2], self.neuron[i][3])
@@ -104,9 +107,11 @@ class neurons(QOpenGLWidget):
                 dy = self.neuron[i][2]
                 dz = self.neuron[i][3]
                 # 近端顶点
-                sx = self.neuron[i - 1][1]
-                sy = self.neuron[i - 1][2]
-                sz = self.neuron[i - 1][3]
+                if self.neuron[i][5] == -1:
+                    self.neuron[i][5] = 1
+                sx = self.neuron[self.neuron[i][5]][1]
+                sy = self.neuron[self.neuron[i][5]][2]
+                sz = self.neuron[self.neuron[i][5]][3]
                 # 圆柱半径
                 radius = self.neuron[i][4]
                 # 目标圆柱中心轴向量
@@ -142,11 +147,14 @@ class neurons(QOpenGLWidget):
                 gluCylinder(quadric, radius, radius, dis, 16, 12)
                 glPopMatrix()
             i = i + 1
-
+            if self.neuron[i][5] != i-1:
+                glColor3f(self.color[k%3][0], self.color[k%3][1], self.color[k%3][2])
+                k = k + 1
+        self.coords = self.coords + 100
         glViewport(0, 0, self.width, self.height)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(-1000, 1000, -1000, 1000, -100, 100)
+        glOrtho(-1*self.coords, self.coords, -1*self.coords, self.coords, -1*self.coords, self.coords)
         gluLookAt(1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
@@ -154,6 +162,12 @@ class neurons(QOpenGLWidget):
         glFlush()
         glEndList()
         return genList
+
+    def scale(self,fs):
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glClearColor(0.0,0.0,0.0,1.0)
+        glScale(fs,fs,fs)
+
 
     def setXRotation(self, angle):
         angle = self.normalizeAngle(angle)
@@ -199,21 +213,12 @@ class neurons(QOpenGLWidget):
             angle -= 360 * 16
         return angle
 
-    def Reshape(self, width, height):
-        glViewport(0, 0, width, height)
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glOrtho(-1000, 1000, -1000, 1000, -50, 50)
-        gluLookAt(1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
-        glClear(GL_COLOR_BUFFER_BIT)
-
 
 class Ui_MainWindow(QWidget):
     def __init__(self):
         super(Ui_MainWindow, self).__init__()
-        # mainLayout = QHBoxLayout()
+        # layout = QGridLayout()
         self.textBrowser = QtWidgets.QTextBrowser()
-        self.Browse = QtWidgets.QPushButton()
         self.xSlider = self.createSlider()
         self.ySlider = self.createSlider()
         self.zSlider = self.createSlider()
@@ -235,12 +240,24 @@ class Ui_MainWindow(QWidget):
         self.xSlider.setGeometry(QtCore.QRect(480, 70, 22, 371))
         self.ySlider.setGeometry(QtCore.QRect(530, 70, 22, 371))
         self.zSlider.setGeometry(QtCore.QRect(580, 70, 22, 371))
-
         self.xSlider.setValue(15 * 16)
         self.ySlider.setValue(345 * 16)
         self.zSlider.setValue(0 * 16)
 
-        # self.setLayout(mainLayout)
+        self.pushButton.clicked.connect(self.button_click)
+        # hlayout = QHBoxLayout()
+        # vlayout = QVBoxLayout()
+        # vlayout.addWidget(self.textBrowser)
+        # vlayout.addWidget(self.pushButton)
+        # vlayout.addWidget(self.glWidget)
+        # hlayout.addWidget(self.xSlider)
+        # hlayout.addWidget(self.ySlider)
+        # hlayout.addWidget(self.zSlider)
+        # hlayout.setGeometry(QtCore.QRect(450,60,30,380))
+        # vlayout.setGeometry(QtCore.QRect(10,10,420,480))
+        # layout.addChildLayout(vlayout)
+        # layout.addChildLayout(hlayout)
+        # self.setLayout(layout)
         self.retranslateUi()
         self.setWindowTitle("neuron system")
 
@@ -259,6 +276,9 @@ class Ui_MainWindow(QWidget):
         # Form.setWindowTitle(_translate("Form", "Form"))
         self.pushButton.setText(_translate("Form", "Browse"))
 
+    def button_click(self):
+        dir,type = QFileDialog.getOpenFileName(self,"Browser",'../src/','All Files (*);;Text Files (*.swc)')
+        self.textBrowser.setText(dir)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)

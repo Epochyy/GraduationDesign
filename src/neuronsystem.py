@@ -163,12 +163,6 @@ class neurons(QOpenGLWidget):
         glEndList()
         return genList
 
-    def scale(self,fs):
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glClearColor(0.0,0.0,0.0,1.0)
-        glScale(fs,fs,fs)
-
-
     def setXRotation(self, angle):
         angle = self.normalizeAngle(angle)
         if angle != self.xRot:
@@ -217,18 +211,18 @@ class neurons(QOpenGLWidget):
 class Ui_MainWindow(QWidget):
     def __init__(self):
         super(Ui_MainWindow, self).__init__()
-        # layout = QGridLayout()
+        layout = QGridLayout()
         self.textBrowser = QtWidgets.QTextBrowser()
-        self.xSlider = self.createSlider()
-        self.ySlider = self.createSlider()
-        self.zSlider = self.createSlider()
         self.glWidget = neurons(self)
-        self.xSlider.valueChanged.connect(self.glWidget.setXRotation)
-        self.glWidget.xRotationChanged.connect(self.xSlider.setValue)
-        self.ySlider.valueChanged.connect(self.glWidget.setYRotation)
-        self.glWidget.yRotationChanged.connect(self.ySlider.setValue)
-        self.zSlider.valueChanged.connect(self.glWidget.setZRotation)
-        self.glWidget.zRotationChanged.connect(self.zSlider.setValue)
+        self.xSlider = self.createSlider(self.glWidget.xRotationChanged, self.glWidget.setXRotation)
+        self.ySlider = self.createSlider(self.glWidget.yRotationChanged, self.glWidget.setYRotation)
+        self.zSlider = self.createSlider(self.glWidget.zRotationChanged, self.glWidget.setZRotation)
+        # self.xSlider.valueChanged.connect(self.glWidget.setXRotation)
+        # self.glWidget.xRotationChanged.connect(self.xSlider.setValue)
+        # self.ySlider.valueChanged.connect(self.glWidget.setYRotation)
+        # self.glWidget.yRotationChanged.connect(self.ySlider.setValue)
+        # self.zSlider.valueChanged.connect(self.glWidget.setZRotation)
+        # self.glWidget.zRotationChanged.connect(self.zSlider.setValue)
         self.pushButton = QtWidgets.QPushButton(self)
         self.pushButton.setGeometry(QtCore.QRect(380, 10, 81, 32))
         self.pushButton.setObjectName("pushButton")
@@ -245,6 +239,7 @@ class Ui_MainWindow(QWidget):
         self.zSlider.setValue(0 * 16)
 
         self.pushButton.clicked.connect(self.button_click)
+        # layout.addWidget(self.textBrowser,)
         # hlayout = QHBoxLayout()
         # vlayout = QVBoxLayout()
         # vlayout.addWidget(self.textBrowser)
@@ -258,16 +253,20 @@ class Ui_MainWindow(QWidget):
         # layout.addChildLayout(vlayout)
         # layout.addChildLayout(hlayout)
         # self.setLayout(layout)
+
         self.retranslateUi()
         self.setWindowTitle("neuron system")
 
-    def createSlider(self):
+    def createSlider(self, changedSignal, setterSlot):
         slider = QSlider(Qt.Vertical,self)
         slider.setRange(0, 360 * 16)
         slider.setSingleStep(16)
         slider.setPageStep(15 * 16)
         slider.setTickInterval(15 * 16)
         slider.setTickPosition(QSlider.TicksRight)
+
+        slider.valueChanged.connect(setterSlot)
+        changedSignal.connect(slider.setValue)
 
         return slider
 

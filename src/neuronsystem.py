@@ -7,7 +7,7 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QOpenGLWidget, QSlider, QWidget, QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout
-from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QSize
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QSize, QTimer
 from PyQt5.QtGui import QColor
 
 class neurons(QOpenGLWidget):
@@ -16,14 +16,16 @@ class neurons(QOpenGLWidget):
     zRotationChanged = pyqtSignal(int)
     def __init__(self,parent = None):
         super(neurons, self).__init__(parent)
-        self.width = 720
-        self.height = 600
         self.xRot = 0
         self.yRot = 0
         self.zRot = 0
         self.lastPos = QPoint()
         self.color=[(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
         self.coords=0
+        self.gRot = 0
+        # timer = QTimer(self)
+        # timer.timeout.connect(self.advance)
+        # timer.start(50)
 
     def minimumSizeHint(self):
         return QSize(50, 50)
@@ -38,16 +40,32 @@ class neurons(QOpenGLWidget):
         glLightfv(GL_LIGHT0, GL_POSITION, lightPos)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_NORMALIZE)
-        glShadeModel(GL_FLAT)
+        glShadeModel(GL_SMOOTH)
         glClearColor(0.0, 0.0, 0.0, 1.0)
         self.object = self.makeObject()
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glLoadIdentity()
+        glPushMatrix()
         glColor3f(1.0, 0.0, 0.0)
-        glCallList(self.object)
+        glRotated(self.xRot / 16.0, 1.0, 0.0, 0.0)
+        glRotated(self.yRot / 16.0, 0.0, 1.0, 0.0)
+        glRotated(self.zRot / 16.0, 0.0, 0.0, 1.0)
+        self.drawNeurons(-3.0, -2.0, 0.0, self.gRot / 16.0)
+        glRotated(+90.0, 1.0, 0.0, 0.0)
+        glPopMatrix()
         glFlush()
+
+    def advance(self):
+        self.gRot += 2 * 16
+        self.update()
+
+    def drawNeurons(self, dx, dy, dz, angle):
+        glPushMatrix()
+        glTranslated(dx, dy, dz)
+        glRotated(angle, 0.0, 0.0, 1.0)
+        glCallList(self.object)
+        glPopMatrix()
 
     def resizeGL(self, width, height):
         glViewport(0,0,width,height)
@@ -151,7 +169,6 @@ class neurons(QOpenGLWidget):
                 glColor3f(self.color[k%3][0], self.color[k%3][1], self.color[k%3][2])
                 k = k + 1
         self.coords = self.coords + 100
-        glViewport(0, 0, self.width, self.height)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         glOrtho(-1*self.coords, self.coords, -1*self.coords, self.coords, -1*self.coords, self.coords)
@@ -211,54 +228,38 @@ class neurons(QOpenGLWidget):
 class Ui_MainWindow(QWidget):
     def __init__(self):
         super(Ui_MainWindow, self).__init__()
+        self.setMinimumSize(600,600)
         layout = QGridLayout()
         self.textBrowser = QtWidgets.QTextBrowser()
         self.glWidget = neurons(self)
         self.xSlider = self.createSlider(self.glWidget.xRotationChanged, self.glWidget.setXRotation)
         self.ySlider = self.createSlider(self.glWidget.yRotationChanged, self.glWidget.setYRotation)
         self.zSlider = self.createSlider(self.glWidget.zRotationChanged, self.glWidget.setZRotation)
-        # self.xSlider.valueChanged.connect(self.glWidget.setXRotation)
-        # self.glWidget.xRotationChanged.connect(self.xSlider.setValue)
-        # self.ySlider.valueChanged.connect(self.glWidget.setYRotation)
-        # self.glWidget.yRotationChanged.connect(self.ySlider.setValue)
-        # self.zSlider.valueChanged.connect(self.glWidget.setZRotation)
-        # self.glWidget.zRotationChanged.connect(self.zSlider.setValue)
         self.pushButton = QtWidgets.QPushButton(self)
-        self.pushButton.setGeometry(QtCore.QRect(380, 10, 81, 32))
         self.pushButton.setObjectName("pushButton")
         self.textBrowser = QtWidgets.QTextBrowser(self)
-        self.textBrowser.setGeometry(QtCore.QRect(20, 10, 341, 31))
         self.textBrowser.setObjectName("textBrowser")
-        self.glWidget.setGeometry(QtCore.QRect(19, 59, 441, 391))
         self.glWidget.setObjectName("openGLWidget")
-        self.xSlider.setGeometry(QtCore.QRect(480, 70, 22, 371))
-        self.ySlider.setGeometry(QtCore.QRect(530, 70, 22, 371))
-        self.zSlider.setGeometry(QtCore.QRect(580, 70, 22, 371))
+
         self.xSlider.setValue(15 * 16)
         self.ySlider.setValue(345 * 16)
         self.zSlider.setValue(0 * 16)
 
         self.pushButton.clicked.connect(self.button_click)
-        # layout.addWidget(self.textBrowser,)
-        # hlayout = QHBoxLayout()
-        # vlayout = QVBoxLayout()
-        # vlayout.addWidget(self.textBrowser)
-        # vlayout.addWidget(self.pushButton)
-        # vlayout.addWidget(self.glWidget)
-        # hlayout.addWidget(self.xSlider)
-        # hlayout.addWidget(self.ySlider)
-        # hlayout.addWidget(self.zSlider)
-        # hlayout.setGeometry(QtCore.QRect(450,60,30,380))
-        # vlayout.setGeometry(QtCore.QRect(10,10,420,480))
-        # layout.addChildLayout(vlayout)
-        # layout.addChildLayout(hlayout)
-        # self.setLayout(layout)
+
+        layout.addWidget(self.textBrowser, 2, 2, 3, 49)
+        layout.addWidget(self.pushButton, 2, 52, 3, 8)
+        layout.addWidget(self.glWidget, 6, 2, 45, 58)
+        layout.addWidget(self.xSlider, 52, 2, 3, 58)
+        layout.addWidget(self.ySlider, 55, 2, 3, 58)
+        layout.addWidget(self.zSlider, 58, 2, 3, 58)
+        self.setLayout(layout)
 
         self.retranslateUi()
         self.setWindowTitle("neuron system")
 
     def createSlider(self, changedSignal, setterSlot):
-        slider = QSlider(Qt.Vertical,self)
+        slider = QSlider(Qt.Horizontal,self)
         slider.setRange(0, 360 * 16)
         slider.setSingleStep(16)
         slider.setPageStep(15 * 16)
@@ -272,7 +273,6 @@ class Ui_MainWindow(QWidget):
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        # Form.setWindowTitle(_translate("Form", "Form"))
         self.pushButton.setText(_translate("Form", "Browse"))
 
     def button_click(self):

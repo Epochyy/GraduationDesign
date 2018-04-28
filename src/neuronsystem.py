@@ -4,17 +4,14 @@ import math
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
-from OpenGL.GLUT import *
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QOpenGLWidget, QSlider, QWidget, QFileDialog, QGridLayout, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QOpenGLWidget
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QSize, QTimer
-from PyQt5.QtGui import QColor
 
 class neurons(QOpenGLWidget):
     xRotationChanged = pyqtSignal(int)
     yRotationChanged = pyqtSignal(int)
     zRotationChanged = pyqtSignal(int)
-    def __init__(self,parent = None):
+    def __init__(self, parent = None):
         super(neurons, self).__init__(parent)
         self.xRot = 0
         self.yRot = 0
@@ -23,26 +20,34 @@ class neurons(QOpenGLWidget):
         self.color=[(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
         self.coords=0
         self.gRot = 0
+        self.filepath = None
         # timer = QTimer(self)
         # timer.timeout.connect(self.advance)
         # timer.start(50)
+
+    def setpath(self,dir):
+        self.filepath = dir
 
     def minimumSizeHint(self):
         return QSize(50, 50)
 
     def sizeHint(self):
-        return QSize(400, 400)
+        return QSize(450, 580)
 
     def initializeGL(self):
         # 数据中有两个根房室如何解决？？？
-        self.neuron = self.loaddata('../src/data/Series003_cmle.CNG.swc')
+        self.coords = 0
+        if self.filepath is not None:
+            self.neuron,self.coords = self.loaddata(self.filepath)
+            self.object = self.makeObject()
+        else:
+            self.object=None
         lightPos = (5.0, 5.0, 10.0, 1.0)
         glLightfv(GL_LIGHT0, GL_POSITION, lightPos)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_NORMALIZE)
         glShadeModel(GL_SMOOTH)
         glClearColor(0.0, 0.0, 0.0, 1.0)
-        self.object = self.makeObject()
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -51,10 +56,11 @@ class neurons(QOpenGLWidget):
         glRotated(self.xRot / 16.0, 1.0, 0.0, 0.0)
         glRotated(self.yRot / 16.0, 0.0, 1.0, 0.0)
         glRotated(self.zRot / 16.0, 0.0, 0.0, 1.0)
-        self.drawNeurons(-3.0, -2.0, 0.0, self.gRot / 16.0)
+        self.drawNeurons(0.0, 0.0, 0.0, self.gRot / 16.0)
         glRotated(+90.0, 1.0, 0.0, 0.0)
         glPopMatrix()
         glFlush()
+        self.update()
 
     def advance(self):
         self.gRot += 2 * 16
@@ -64,7 +70,8 @@ class neurons(QOpenGLWidget):
         glPushMatrix()
         glTranslated(dx, dy, dz)
         glRotated(angle, 0.0, 0.0, 1.0)
-        glCallList(self.object)
+        if self.object is not None:
+            glCallList(self.object)
         glPopMatrix()
 
     def resizeGL(self, width, height):
@@ -73,12 +80,16 @@ class neurons(QOpenGLWidget):
         glColor3f(1.0, 0.0, 0.0)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(-1*self.coords, self.coords, -1*self.coords, self.coords, -1*self.coords, self.coords)
+        if self.coords!=0:
+            glOrtho(-1*self.coords, self.coords, -1*self.coords, self.coords, -1*self.coords, self.coords)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
     # 加载数据
     def loaddata(self, filepath):
+        coords = 0
+        if filepath is None:
+            return None,0
         f = open(filepath)
         lines = f.readlines()
         f.close()
@@ -93,14 +104,22 @@ class neurons(QOpenGLWidget):
         neuron = {
             int(data[0]): [int(data[1]), float(data[2]), float(data[3]), float(data[4]), float(data[5]),
                            int(data[6])]}
+        coords = max(coords, neuron[1][1])
+        coords = max(coords, neuron[1][2])
+        coords = max(coords, neuron[1][3])
         x += 1
+        cnt = 2
         lines = lines[x:]
         for line in lines:
             data = line.strip().split(' ')
             neuron.setdefault(int(data[0]), []).extend(
                 [int(data[1]), float(data[2]), float(data[3]), float(data[4]), float(data[5]), int(data[6])])
+            coords = max(coords, neuron[cnt][1])
+            coords = max(coords, neuron[cnt][2])
+            coords = max(coords, neuron[cnt][3])
+            cnt += 1
             # print(neuron[float(data[0])])
-        return neuron
+        return neuron,coords
 
     def makeObject(self):
         genList = glGenLists(1)
@@ -108,11 +127,14 @@ class neurons(QOpenGLWidget):
         length = len(self.neuron)
         k = 0
         glColor3f(1.0, 0.0, 0.0)
+        self.coords = self.coords + 100
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(-1 * self.coords, self.coords, -1 * self.coords, self.coords, -1 * self.coords, self.coords)
+        glMatrixMode(GL_MODELVIEW)
+        # glLoadIdentity()
         i = 1
         while i < length:
-            self.coords = max(self.coords,self.neuron[i][1])
-            self.coords = max(self.coords,self.neuron[i][2])
-            self.coords = max(self.coords,self.neuron[i][3])
             if self.neuron[i][0] == 1:
                 glPushMatrix()
                 glTranslatef(self.neuron[i][1], self.neuron[i][2], self.neuron[i][3])
@@ -168,7 +190,7 @@ class neurons(QOpenGLWidget):
             if self.neuron[i][5] != i-1:
                 glColor3f(self.color[k%3][0], self.color[k%3][1], self.color[k%3][2])
                 k = k + 1
-        self.coords = self.coords + 100
+        # self.coords = self.coords + 100
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         glOrtho(-1*self.coords, self.coords, -1*self.coords, self.coords, -1*self.coords, self.coords)
@@ -224,63 +246,3 @@ class neurons(QOpenGLWidget):
             angle -= 360 * 16
         return angle
 
-
-class Ui_MainWindow(QWidget):
-    def __init__(self):
-        super(Ui_MainWindow, self).__init__()
-        self.setMinimumSize(600,600)
-        layout = QGridLayout()
-        self.textBrowser = QtWidgets.QTextBrowser()
-        self.glWidget = neurons(self)
-        self.xSlider = self.createSlider(self.glWidget.xRotationChanged, self.glWidget.setXRotation)
-        self.ySlider = self.createSlider(self.glWidget.yRotationChanged, self.glWidget.setYRotation)
-        self.zSlider = self.createSlider(self.glWidget.zRotationChanged, self.glWidget.setZRotation)
-        self.pushButton = QtWidgets.QPushButton(self)
-        self.pushButton.setObjectName("pushButton")
-        self.textBrowser = QtWidgets.QTextBrowser(self)
-        self.textBrowser.setObjectName("textBrowser")
-        self.glWidget.setObjectName("openGLWidget")
-
-        self.xSlider.setValue(15 * 16)
-        self.ySlider.setValue(345 * 16)
-        self.zSlider.setValue(0 * 16)
-
-        self.pushButton.clicked.connect(self.button_click)
-
-        layout.addWidget(self.textBrowser, 2, 2, 3, 49)
-        layout.addWidget(self.pushButton, 2, 52, 3, 8)
-        layout.addWidget(self.glWidget, 6, 2, 45, 58)
-        layout.addWidget(self.xSlider, 52, 2, 3, 58)
-        layout.addWidget(self.ySlider, 55, 2, 3, 58)
-        layout.addWidget(self.zSlider, 58, 2, 3, 58)
-        self.setLayout(layout)
-
-        self.retranslateUi()
-        self.setWindowTitle("neuron system")
-
-    def createSlider(self, changedSignal, setterSlot):
-        slider = QSlider(Qt.Horizontal,self)
-        slider.setRange(0, 360 * 16)
-        slider.setSingleStep(16)
-        slider.setPageStep(15 * 16)
-        slider.setTickInterval(15 * 16)
-        slider.setTickPosition(QSlider.TicksRight)
-
-        slider.valueChanged.connect(setterSlot)
-        changedSignal.connect(slider.setValue)
-
-        return slider
-
-    def retranslateUi(self):
-        _translate = QtCore.QCoreApplication.translate
-        self.pushButton.setText(_translate("Form", "Browse"))
-
-    def button_click(self):
-        dir,type = QFileDialog.getOpenFileName(self,"Browser",'../src/','All Files (*);;Text Files (*.swc)')
-        self.textBrowser.setText(dir)
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    sp = Ui_MainWindow()
-    sp.show()
-    sys.exit(app.exec_())

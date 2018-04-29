@@ -17,10 +17,12 @@ class neurons(QOpenGLWidget):
         self.yRot = 0
         self.zRot = 0
         self.lastPos = QPoint()
-        self.color=[(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
-        self.coords=0
+        self.color = [(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
+        self.coords = 0
         self.gRot = 0
         self.filepath = None
+        self.scale = 1
+        self.flag = False
         # timer = QTimer(self)
         # timer.timeout.connect(self.advance)
         # timer.start(50)
@@ -32,7 +34,7 @@ class neurons(QOpenGLWidget):
         return QSize(50, 50)
 
     def sizeHint(self):
-        return QSize(450, 580)
+        return QSize(450*self.scale, 580*self.scale)
 
     def initializeGL(self):
         # 数据中有两个根房室如何解决？？？
@@ -138,6 +140,7 @@ class neurons(QOpenGLWidget):
             if self.neuron[i][0] == 1:
                 glPushMatrix()
                 glTranslatef(self.neuron[i][1], self.neuron[i][2], self.neuron[i][3])
+                # glScale(self.scale,self.scale,self.scale)
                 my_quad = gluNewQuadric()
                 gluSphere(my_quad,self.neuron[i][4], 32, 16)
                 glPopMatrix()
@@ -183,6 +186,7 @@ class neurons(QOpenGLWidget):
                 glPushMatrix()
                 glTranslatef(sx, sy, sz)
                 glRotatef(angle, fx, fy, fz)
+                # glScale(self.scale, self.scale, self.scale)
                 quadric = gluNewQuadric()
                 gluCylinder(quadric, radius, radius, dis, 16, 12)
                 glPopMatrix()
@@ -222,22 +226,32 @@ class neurons(QOpenGLWidget):
             self.zRot = angle
             self.zRotationChanged.emit(angle)
             self.update()
-
+    # 点击--旋转
     def mousePressEvent(self, event):
-        self.lastPos = event.pos()
+        self.lastPos = event.localPos()
 
     def mouseMoveEvent(self, event):
         dx = event.x() - self.lastPos.x()
         dy = event.y() - self.lastPos.y()
 
-        if event.buttons() & Qt.LeftButton:
+        if event.buttons():
             self.setXRotation(self.xRot + 8 * dy)
             self.setYRotation(self.yRot + 8 * dx)
-        elif event.buttons() & Qt.RightButton:
-            self.setXRotation(self.xRot + 8 * dy)
             self.setZRotation(self.zRot + 8 * dx)
 
-        self.lastPos = event.pos()
+        self.lastPos = event.localPos()
+
+    # 放大--缩小
+    def mouseDoubleClickEvent(self, QMouseEvent):
+        if self.filepath is not None and QMouseEvent.buttons():
+            if self.scale >= 125:
+                self.flag = True
+            if self.flag:
+                self.scale = self.scale * 5
+            else:
+                self.scale = self.scale / 5
+            self.initializeGL()
+        # self.update()
 
     def normalizeAngle(self, angle):
         while angle < 0:

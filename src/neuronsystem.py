@@ -23,6 +23,8 @@ class neurons(QOpenGLWidget):
         self.filepath = None
         self.scale = 1
         self.flag = False
+        self.width = 450
+        self.height = 580
         # timer = QTimer(self)
         # timer.timeout.connect(self.advance)
         # timer.start(50)
@@ -34,7 +36,10 @@ class neurons(QOpenGLWidget):
         return QSize(50, 50)
 
     def sizeHint(self):
-        return QSize(450*self.scale, 580*self.scale)
+        return QSize(450, 580)
+
+    def resize(self):
+        return QSize(450*self.scale,580*self.scale)
 
     def initializeGL(self):
         # 数据中有两个根房室如何解决？？？
@@ -58,6 +63,7 @@ class neurons(QOpenGLWidget):
         glRotated(self.xRot / 16.0, 1.0, 0.0, 0.0)
         glRotated(self.yRot / 16.0, 0.0, 1.0, 0.0)
         glRotated(self.zRot / 16.0, 0.0, 0.0, 1.0)
+        glScale(self.scale, self.scale, self.scale)
         self.drawNeurons(0.0, 0.0, 0.0, self.gRot / 16.0)
         glRotated(+90.0, 1.0, 0.0, 0.0)
         glPopMatrix()
@@ -74,6 +80,11 @@ class neurons(QOpenGLWidget):
         glRotated(angle, 0.0, 0.0, 1.0)
         if self.object is not None:
             glCallList(self.object)
+            glMatrixMode(GL_PROJECTION)
+            glLoadIdentity()
+            glOrtho(-1 * self.coords*self.scale, self.coords*self.scale, -1 * self.coords*self.scale,
+                    self.coords*self.scale, -1 * self.coords*self.scale, self.coords*self.scale)
+            glMatrixMode(GL_MODELVIEW)
         glPopMatrix()
 
     def resizeGL(self, width, height):
@@ -83,7 +94,8 @@ class neurons(QOpenGLWidget):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         if self.coords!=0:
-            glOrtho(-1*self.coords, self.coords, -1*self.coords, self.coords, -1*self.coords, self.coords)
+            glOrtho(-1*self.coords*self.scale, self.coords*self.scale, -1*self.coords*self.scale,
+                    self.coords*self.scale, -1*self.coords*self.scale, self.coords*self.scale)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
@@ -132,7 +144,8 @@ class neurons(QOpenGLWidget):
         self.coords = self.coords + 100
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(-1 * self.coords, self.coords, -1 * self.coords, self.coords, -1 * self.coords, self.coords)
+        glOrtho(-1 * self.coords*self.scale, self.coords*self.scale, -1 * self.coords*self.scale,
+                self.coords*self.scale, -1 * self.coords*self.scale, self.coords*self.scale)
         glMatrixMode(GL_MODELVIEW)
         # glLoadIdentity()
         i = 1
@@ -140,7 +153,6 @@ class neurons(QOpenGLWidget):
             if self.neuron[i][0] == 1:
                 glPushMatrix()
                 glTranslatef(self.neuron[i][1], self.neuron[i][2], self.neuron[i][3])
-                # glScale(self.scale,self.scale,self.scale)
                 my_quad = gluNewQuadric()
                 gluSphere(my_quad,self.neuron[i][4], 32, 16)
                 glPopMatrix()
@@ -186,7 +198,6 @@ class neurons(QOpenGLWidget):
                 glPushMatrix()
                 glTranslatef(sx, sy, sz)
                 glRotatef(angle, fx, fy, fz)
-                # glScale(self.scale, self.scale, self.scale)
                 quadric = gluNewQuadric()
                 gluCylinder(quadric, radius, radius, dis, 16, 12)
                 glPopMatrix()
@@ -197,7 +208,8 @@ class neurons(QOpenGLWidget):
         # self.coords = self.coords + 100
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(-1*self.coords, self.coords, -1*self.coords, self.coords, -1*self.coords, self.coords)
+        glOrtho(-1 * self.coords * self.scale, self.coords * self.scale, -1 * self.coords * self.scale,
+                self.coords * self.scale, -1 * self.coords * self.scale, self.coords * self.scale)
         gluLookAt(1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
@@ -244,14 +256,19 @@ class neurons(QOpenGLWidget):
     # 放大--缩小
     def mouseDoubleClickEvent(self, QMouseEvent):
         if self.filepath is not None and QMouseEvent.buttons():
-            if self.scale >= 125:
+            if self.scale >= 16:
                 self.flag = True
+            elif self.scale <= 1:
+                self.flag = False
             if self.flag:
-                self.scale = self.scale * 5
+                self.scale = self.scale / 2
             else:
-                self.scale = self.scale / 5
-            self.initializeGL()
-        # self.update()
+                self.scale = self.scale * 2
+            self.coords = self.coords * self.scale
+            self.resize()
+
+    def translation(self):
+        pass
 
     def normalizeAngle(self, angle):
         while angle < 0:

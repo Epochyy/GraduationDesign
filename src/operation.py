@@ -15,7 +15,7 @@ def split(filepath):
 class Ui_MainWindow(QWidget):
     def __init__(self):
         super(Ui_MainWindow, self).__init__()
-        self.setMinimumSize(600,600)
+        self.setMinimumSize(700,600)
         self.x_last_time_move = 0
         self.y_last_time_move = 0
         layout = QGridLayout()
@@ -25,6 +25,9 @@ class Ui_MainWindow(QWidget):
         self.xSlider = self.createSlider(self.glWidget.xRotationChanged, self.glWidget.setXRotation)
         self.ySlider = self.createSlider(self.glWidget.yRotationChanged, self.glWidget.setYRotation)
         self.zSlider = self.createSlider(self.glWidget.zRotationChanged, self.glWidget.setZRotation)
+        self.xTrans = self.createTrans(self.glWidget.xTranslationChanged, self.glWidget.setXtranslation)
+        self.yTrans = self.createTrans(self.glWidget.yTranslationChanged, self.glWidget.setYtranslation)
+        self.zTrans = self.createTrans(self.glWidget.zTranslationChanged, self.glWidget.setZtranslation)
         self.pushButton = QtWidgets.QPushButton(self)
         self.pushButton.setObjectName("pushButton")
         self.textBrowser = QtWidgets.QTextBrowser(self)
@@ -46,6 +49,10 @@ class Ui_MainWindow(QWidget):
         self.ySlider.setValue(0 * 16)
         self.zSlider.setValue(0 * 16)
 
+        self.xTrans.setValue(0 * 16)
+        self.yTrans.setValue(0 * 16)
+        self.zTrans.setValue(0 * 16)
+
         self.pushButton.clicked.connect(self.button_click)
 
         layout.addWidget(self.textBrowser, 2, 2, 3, 49)
@@ -54,6 +61,10 @@ class Ui_MainWindow(QWidget):
         layout.addWidget(self.xSlider, 52, 2, 3, 58)
         layout.addWidget(self.ySlider, 55, 2, 3, 58)
         layout.addWidget(self.zSlider, 58, 2, 3, 58)
+        layout.addWidget(self.xTrans, 6, 61, 45, 3)
+        layout.addWidget(self.yTrans, 6, 65, 45, 3)
+        layout.addWidget(self.zTrans, 6, 69, 45, 3)
+
         self.setLayout(layout)
 
         self.retranslateUi()
@@ -65,6 +76,19 @@ class Ui_MainWindow(QWidget):
         slider.setSingleStep(16)
         slider.setPageStep(15 * 16)
         slider.setTickInterval(15 * 16)
+        slider.setTickPosition(QSlider.TicksBelow)
+
+        slider.valueChanged.connect(setterSlot)
+        changedSignal.connect(slider.setValue)
+
+        return slider
+
+    def createTrans(self, changedSignal, setterSlot):
+        slider = QSlider(Qt.Vertical, self)
+        slider.setRange(-1000*16, 1000 * 16)
+        slider.setSingleStep(16)
+        slider.setPageStep(50 * 16)
+        slider.setTickInterval(50 * 16)
         slider.setTickPosition(QSlider.TicksRight)
 
         slider.valueChanged.connect(setterSlot)

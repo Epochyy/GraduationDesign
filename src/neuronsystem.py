@@ -11,11 +11,17 @@ class neurons(QOpenGLWidget):
     xRotationChanged = pyqtSignal(int)
     yRotationChanged = pyqtSignal(int)
     zRotationChanged = pyqtSignal(int)
+    xTranslationChanged = pyqtSignal(int)
+    yTranslationChanged = pyqtSignal(int)
+    zTranslationChanged = pyqtSignal(int)
     def __init__(self, parent = None):
         super(neurons, self).__init__(parent)
         self.xRot = 0
         self.yRot = 0
         self.zRot = 0
+        self.xTran = 0
+        self.yTran = 0
+        self.zTran = 0
         self.lastPos = QPoint()
         self.color = [(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
         self.coords = 0
@@ -63,8 +69,9 @@ class neurons(QOpenGLWidget):
         glRotated(self.xRot / 16.0, 1.0, 0.0, 0.0)
         glRotated(self.yRot / 16.0, 0.0, 1.0, 0.0)
         glRotated(self.zRot / 16.0, 0.0, 0.0, 1.0)
+        # glTranslate()
         glScale(self.scale, self.scale, self.scale)
-        self.drawNeurons(0.0, 0.0, 0.0, self.gRot / 16.0)
+        self.drawNeurons(self.xTran / 16.0, self.yTran / 16.0, self.zTran / 16.0, self.gRot / 16.0)
         glRotated(+90.0, 1.0, 0.0, 0.0)
         glPopMatrix()
         glFlush()
@@ -82,8 +89,7 @@ class neurons(QOpenGLWidget):
             glCallList(self.object)
             glMatrixMode(GL_PROJECTION)
             glLoadIdentity()
-            glOrtho(-1 * self.coords*self.scale, self.coords*self.scale, -1 * self.coords*self.scale,
-                    self.coords*self.scale, -1 * self.coords*self.scale, self.coords*self.scale)
+            glOrtho(-1 * self.coords, self.coords, -1 * self.coords, self.coords, -1 * self.coords, self.coords)
             glMatrixMode(GL_MODELVIEW)
         glPopMatrix()
 
@@ -94,8 +100,7 @@ class neurons(QOpenGLWidget):
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         if self.coords!=0:
-            glOrtho(-1*self.coords*self.scale, self.coords*self.scale, -1*self.coords*self.scale,
-                    self.coords*self.scale, -1*self.coords*self.scale, self.coords*self.scale)
+            glOrtho(-1 * self.coords, self.coords, -1 * self.coords, self.coords, -1 * self.coords, self.coords)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
@@ -144,8 +149,7 @@ class neurons(QOpenGLWidget):
         self.coords = self.coords + 100
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(-1 * self.coords*self.scale, self.coords*self.scale, -1 * self.coords*self.scale,
-                self.coords*self.scale, -1 * self.coords*self.scale, self.coords*self.scale)
+        glOrtho(-1 * self.coords, self.coords, -1 * self.coords, self.coords, -1 * self.coords, self.coords)
         glMatrixMode(GL_MODELVIEW)
         # glLoadIdentity()
         i = 1
@@ -208,8 +212,7 @@ class neurons(QOpenGLWidget):
         # self.coords = self.coords + 100
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        glOrtho(-1 * self.coords * self.scale, self.coords * self.scale, -1 * self.coords * self.scale,
-                self.coords * self.scale, -1 * self.coords * self.scale, self.coords * self.scale)
+        glOrtho(-1 * self.coords, self.coords, -1 * self.coords,self.coords, -1 * self.coords, self.coords)
         gluLookAt(1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
@@ -265,10 +268,28 @@ class neurons(QOpenGLWidget):
             else:
                 self.scale = self.scale * 2
             self.coords = self.coords * self.scale
-            self.resize()
+            # self.resize()
 
-    def translation(self):
-        pass
+    def setXtranslation(self,value):
+        value = self.normalizeValue(value)
+        if value != self.xTran:
+            self.xTran = value
+            self.xTranslationChanged.emit(value)
+            self.update()
+
+    def setYtranslation(self,value):
+        value = self.normalizeValue(value)
+        if value != self.yTran:
+            self.yTran = value
+            self.yTranslationChanged.emit(value)
+            self.update()
+
+    def setZtranslation(self,value):
+        value = self.normalizeValue(value)
+        if value != self.zTran:
+            self.zTran = value
+            self.zTranslationChanged.emit(value)
+            self.update()
 
     def normalizeAngle(self, angle):
         while angle < 0:
@@ -276,4 +297,12 @@ class neurons(QOpenGLWidget):
         while angle > 360 * 16:
             angle -= 360 * 16
         return angle
+
+    def normalizeValue(self, value):
+        # value -= 100 * 16
+        while value < -1000*16:
+            value += 2000*6
+        while value > 1000*16:
+            value -= 2000*16
+        return value
 

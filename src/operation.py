@@ -1,5 +1,6 @@
+import sys
 from neuronsystem import neurons
-from OpenGL.GLUT import *
+from OpenGL.GLU import *
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QSlider, QWidget, QFileDialog, QGridLayout, QSizePolicy, QScrollArea
 from PyQt5.QtCore import Qt, QEvent
@@ -30,6 +31,9 @@ class Ui_MainWindow(QWidget):
         self.zTrans = self.createTrans(self.glWidget.zTranslationChanged, self.glWidget.setZtranslation)
         self.pushButton = QtWidgets.QPushButton(self)
         self.pushButton.setObjectName("pushButton")
+        self.Point = QtWidgets.QPushButton(self)
+        self.Line = QtWidgets.QPushButton(self)
+        self.Surface = QtWidgets.QPushButton(self)
         self.textBrowser = QtWidgets.QTextBrowser(self)
         self.textBrowser.setObjectName("textBrowser")
         self.glWidget.setObjectName("openGLWidget")
@@ -41,6 +45,12 @@ class Ui_MainWindow(QWidget):
 
         self.vertical_bar = self.glWidgetArea.verticalScrollBar()
         self.horizontal_bar = self.glWidgetArea.horizontalScrollBar()
+        # self.translate = QtWidgets.QLabel()
+        # self.translate.setObjectName("label1")
+        # self.rotate = QtWidgets.QLabel()
+        # self.rotate.setObjectName("label2")
+        # self.rotate.setWordWrap(True)
+        # self.rotate.setAlignment(Qt.AlignTop)
 
         self.glWidgetArea.setMinimumSize(50, 50)
         self.glWidgetArea.installEventFilter(self)
@@ -54,6 +64,9 @@ class Ui_MainWindow(QWidget):
         self.zTrans.setValue(0 * 16)
 
         self.pushButton.clicked.connect(self.button_click)
+        self.Point.clicked.connect(self.point_click)
+        self.Line.clicked.connect(self.line_click)
+        self.Surface.clicked.connect(self.surface_click)
 
         layout.addWidget(self.textBrowser, 2, 2, 3, 49)
         layout.addWidget(self.pushButton, 2, 52, 3, 8)
@@ -61,9 +74,14 @@ class Ui_MainWindow(QWidget):
         layout.addWidget(self.xSlider, 52, 2, 3, 58)
         layout.addWidget(self.ySlider, 55, 2, 3, 58)
         layout.addWidget(self.zSlider, 58, 2, 3, 58)
-        layout.addWidget(self.xTrans, 6, 61, 45, 3)
-        layout.addWidget(self.yTrans, 6, 65, 45, 3)
-        layout.addWidget(self.zTrans, 6, 69, 45, 3)
+        layout.addWidget(self.xTrans, 6, 62, 45, 2)
+        layout.addWidget(self.yTrans, 6, 64, 45, 2)
+        layout.addWidget(self.zTrans, 6, 66, 45, 2)
+        layout.addWidget(self.Point, 52, 63, 3, 4)
+        layout.addWidget(self.Line, 55, 63, 3, 4)
+        layout.addWidget(self.Surface, 58, 63, 3, 4)
+        # layout.addWidget(self.translate,2, 64, 3, 2)
+        # layout.addWidget(self.rotate,52, 62, 6, 1)
 
         self.setLayout(layout)
 
@@ -99,12 +117,30 @@ class Ui_MainWindow(QWidget):
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.pushButton.setText(_translate("Form", "Browse"))
+        self.Point.setText(_translate("Form", "Point"))
+        self.Line.setText(_translate("Form", "Line"))
+        self.Surface.setText(_translate("Form", "Surface"))
+        # self.translate.setText(_translate("Form", "平移"))
+        # self.rotate.setText(_translate("Form", "旋转"))
 
     def button_click(self):
         dir,type = QFileDialog.getOpenFileName(self,"Browser",'./','All Files (*);;Text Files (*.swc)')
         self.textBrowser.setText(dir)
         dir = split(dir)
+        self.glWidget.clear()
         self.glWidget.setpath(dir)
+        self.glWidget.initializeGL()
+
+    def point_click(self):
+        self.glWidget.setmode(GLU_POINT)
+        self.glWidget.initializeGL()
+
+    def line_click(self):
+        self.glWidget.setmode(GLU_LINE)
+        self.glWidget.initializeGL()
+
+    def surface_click(self):
+        self.glWidget.setmode(GLU_FILL)
         self.glWidget.initializeGL()
 
     def eventFilter(self, source, event):
@@ -141,3 +177,4 @@ if __name__ == "__main__":
     sp = Ui_MainWindow()
     sp.show()
     sys.exit(app.exec_())
+    

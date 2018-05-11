@@ -34,6 +34,26 @@ class neurons(QOpenGLWidget):
         # timer = QTimer(self)
         # timer.timeout.connect(self.advance)
         # timer.start(50)
+    def clear(self):
+        self.xRot = 0
+        self.yRot = 0
+        self.zRot = 0
+        self.xTran = 0
+        self.yTran = 0
+        self.zTran = 0
+        self.lastPos = QPoint()
+        self.color = [(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
+        self.coords = 0
+        self.gRot = 0
+        self.filepath = None
+        self.scale = 1
+        self.flag = False
+        self.width = 450
+        self.height = 580
+        self.mode = GLU_FILL
+
+    def setmode(self, mode):
+        self.mode = mode
 
     def setpath(self,dir):
         self.filepath = dir
@@ -52,11 +72,13 @@ class neurons(QOpenGLWidget):
         self.coords = 0
         if self.filepath is not None:
             self.neuron,self.coords = self.loaddata(self.filepath)
-            self.object = self.makeObject()
+            self.object = self.makeObject(self.mode)
         else:
             self.object=None
-        lightPos = (5.0, 5.0, 10.0, 1.0)
-        glLightfv(GL_LIGHT0, GL_POSITION, lightPos)
+        lightPos = (2.0, 2.0, 2.0, 1.0)
+        glEnable(GL_LIGHT1)
+        glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 45)
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, lightPos)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_NORMALIZE)
         glShadeModel(GL_SMOOTH)
@@ -140,7 +162,7 @@ class neurons(QOpenGLWidget):
             # print(neuron[float(data[0])])
         return neuron,coords
 
-    def makeObject(self):
+    def makeObject(self,mode=GLU_FILL):
         genList = glGenLists(1)
         glNewList(genList, GL_COMPILE)
         length = len(self.neuron)
@@ -158,6 +180,7 @@ class neurons(QOpenGLWidget):
                 glPushMatrix()
                 glTranslatef(self.neuron[i][1], self.neuron[i][2], self.neuron[i][3])
                 my_quad = gluNewQuadric()
+                gluQuadricDrawStyle(my_quad, mode)
                 gluSphere(my_quad,self.neuron[i][4], 32, 16)
                 glPopMatrix()
             else:
@@ -203,6 +226,7 @@ class neurons(QOpenGLWidget):
                 glTranslatef(sx, sy, sz)
                 glRotatef(angle, fx, fy, fz)
                 quadric = gluNewQuadric()
+                gluQuadricDrawStyle(quadric, mode)
                 gluCylinder(quadric, radius, radius, dis, 16, 12)
                 glPopMatrix()
             i = i + 1
@@ -268,7 +292,6 @@ class neurons(QOpenGLWidget):
             else:
                 self.scale = self.scale * 2
             self.coords = self.coords * self.scale
-            # self.resize()
 
     def setXtranslation(self,value):
         value = self.normalizeValue(value)
@@ -299,7 +322,6 @@ class neurons(QOpenGLWidget):
         return angle
 
     def normalizeValue(self, value):
-        # value -= 100 * 16
         while value < -1000*16:
             value += 2000*6
         while value > 1000*16:

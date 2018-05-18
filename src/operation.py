@@ -1,4 +1,7 @@
 import sys
+
+from PyQt5.QtGui import QPalette, QBrush, QPixmap
+
 from neuronsystem import neurons
 from OpenGL.GLU import *
 from PyQt5 import QtCore, QtWidgets
@@ -34,6 +37,7 @@ class Ui_MainWindow(QWidget):
         self.Point = QtWidgets.QPushButton(self)
         self.Line = QtWidgets.QPushButton(self)
         self.Surface = QtWidgets.QPushButton(self)
+        self.choice = QtWidgets.QPushButton(self)
         self.textBrowser = QtWidgets.QTextBrowser(self)
         self.textBrowser.setObjectName("textBrowser")
         self.glWidget.setObjectName("openGLWidget")
@@ -45,12 +49,6 @@ class Ui_MainWindow(QWidget):
 
         self.vertical_bar = self.glWidgetArea.verticalScrollBar()
         self.horizontal_bar = self.glWidgetArea.horizontalScrollBar()
-        # self.translate = QtWidgets.QLabel()
-        # self.translate.setObjectName("label1")
-        # self.rotate = QtWidgets.QLabel()
-        # self.rotate.setObjectName("label2")
-        # self.rotate.setWordWrap(True)
-        # self.rotate.setAlignment(Qt.AlignTop)
 
         self.glWidgetArea.setMinimumSize(50, 50)
         self.glWidgetArea.installEventFilter(self)
@@ -58,6 +56,7 @@ class Ui_MainWindow(QWidget):
         self.xSlider.setValue(15 * 16)
         self.ySlider.setValue(0 * 16)
         self.zSlider.setValue(0 * 16)
+        self.xSlider.setStyleSheet("border-top-color: rgb(112, 120, 153);")
 
         self.xTrans.setValue(0 * 16)
         self.yTrans.setValue(0 * 16)
@@ -67,9 +66,11 @@ class Ui_MainWindow(QWidget):
         self.Point.clicked.connect(self.point_click)
         self.Line.clicked.connect(self.line_click)
         self.Surface.clicked.connect(self.surface_click)
+        self.choice.clicked.connect(self.choice_click)
 
         layout.addWidget(self.textBrowser, 2, 2, 3, 49)
         layout.addWidget(self.pushButton, 2, 52, 3, 8)
+        layout.addWidget(self.choice, 2, 62, 3, 5)
         layout.addWidget(self.glWidgetArea, 6, 2, 45, 58)
         layout.addWidget(self.xSlider, 52, 2, 3, 58)
         layout.addWidget(self.ySlider, 55, 2, 3, 58)
@@ -80,12 +81,14 @@ class Ui_MainWindow(QWidget):
         layout.addWidget(self.Point, 52, 63, 3, 4)
         layout.addWidget(self.Line, 55, 63, 3, 4)
         layout.addWidget(self.Surface, 58, 63, 3, 4)
-        # layout.addWidget(self.translate,2, 64, 3, 2)
-        # layout.addWidget(self.rotate,52, 62, 6, 1)
 
         self.setLayout(layout)
+        self.palette = QPalette()
+        self.palette.setBrush(self.backgroundRole(), QBrush(QPixmap('../UI/background5.png')))
 
+        self.setPalette(self.palette)
         self.retranslateUi()
+        self.setWindowOpacity(0.9)
         self.setWindowTitle("neuron system")
 
     def createSlider(self, changedSignal, setterSlot):
@@ -117,18 +120,92 @@ class Ui_MainWindow(QWidget):
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.pushButton.setText(_translate("Form", "Browse"))
+        self.pushButton.setStyleSheet('''
+            QPushButton{
+                border-radius: 5%;
+                background-color:#FEAE1B;
+                font-size: 14px;
+
+            }
+            '''
+            '''
+            QPushButton:hover{
+                padding-right: 8px;
+            }
+            ''')
         self.Point.setText(_translate("Form", "Point"))
+        self.Point.setStyleSheet('''
+            QPushButton{
+                border-radius: 5%;
+                background-color:#4CAF50;
+                font-size: 14px;
+
+            }
+            '''
+            '''
+            QPushButton:hover{
+                padding-right: 8px;
+            }
+            ''')
         self.Line.setText(_translate("Form", "Line"))
+        self.Line.setStyleSheet('''
+            QPushButton{
+                border-radius: 5%;
+                background-color:#008CBA;
+                font-size: 14px;
+
+            }
+            '''
+            '''
+            QPushButton:hover{
+                padding-right: 8px;
+            }
+            ''')
         self.Surface.setText(_translate("Form", "Surface"))
-        # self.translate.setText(_translate("Form", "平移"))
-        # self.rotate.setText(_translate("Form", "旋转"))
+        self.Surface.setStyleSheet('''
+            QPushButton{
+                border-radius: 5%;
+                background-color:#f44336;
+                font-size: 14px;
+
+            }
+            '''
+            '''
+            QPushButton:hover{
+                padding-right: 8px;
+            }
+            ''')
+        self.choice.setText(_translate("Form", "真实感"))
+        self.choice.setStyleSheet('''
+            QPushButton{
+                border-radius: 5%;
+                background-color:#f44336;
+                font-size: 14px;
+
+            }
+            '''
+            '''
+            QPushButton:hover{
+                padding-right: 8px;
+            }
+            ''')
+
 
     def button_click(self):
         dir,type = QFileDialog.getOpenFileName(self,"Browser",'./','All Files (*);;Text Files (*.swc)')
         self.textBrowser.setText(dir)
-        dir = split(dir)
+        # dir = split(dir)
         self.glWidget.clear()
         self.glWidget.setpath(dir)
+        self.glWidget.initializeGL()
+
+    def choice_click(self):
+        if self.choice.text() == "真实感":
+            self.glWidget.changestyle(0)
+            self.choice.setText("骨架")
+        elif self.choice.text() == "骨架":
+            self.glWidget.changestyle(1)
+            self.choice.setText("真实感")
         self.glWidget.initializeGL()
 
     def point_click(self):

@@ -279,7 +279,7 @@ class neurons(QOpenGLWidget):
             glNewList(genList, GL_COMPILE)
             length = len(self.neuron)
             k = 0
-            glColor3f(1.0, 0.0, 0.0)
+            glColor3f(1.0, 1.0, 1.0)
             self.coords = self.coords + 100
             glMatrixMode(GL_PROJECTION)
             glLoadIdentity()
@@ -298,7 +298,7 @@ class neurons(QOpenGLWidget):
                 sy = self.neuron[self.neuron[i][5]][2]
                 sz = self.neuron[self.neuron[i][5]][3]
                 glPushMatrix()
-                glBegin(GL_LINE)
+                glBegin(GL_LINES)
                 glVertex3f(dx,dy,dz)
                 glVertex3f(sx,sy,sz)
                 glEnd()

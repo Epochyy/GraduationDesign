@@ -91,35 +91,58 @@ class neurons(QOpenGLWidget):
                 tag = False
         else:
             self.object = None
-        mat_shininess = {50.0}
-        mat_specular = {1.0, 1.0, 1.0, 1.0}
+        mat_shininess = (50.0)
+        mat_specular = (1.0, 1.0, 1.0, 1.0)
 
-        llightPos = (0.5, 0.5, 0.5, 1.0)
+        light_position = (0.0, 0.0, -1.0, 1.0)
         light_ambient = (0.0, 0.0, 0.0, 1.0)
         light_diffuse = (1.0, 1.0, 1.0, 1.0)
-        light_specular = (0.0, 1.0, 1.0, 1.0)
-
-        # glMaterialfv(GL_FRONT, GL_POSITION,mat_specular)
-        # glMaterialfv(GL_FRONT, GL_AMBIENT,mat_shininess)
-
-        glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, 45)
-        # glLightfv(GL_LIGHT0, GL_POSITION, lightPos)
-        # glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient)
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse)
-        # glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular)
+        light_specular = (1.0, 1.0, 1.0, 1.0)
+        fNoLight = (0.0,0.0,0.0,0.0)
         glEnable(GL_LIGHT0)
+        glEnable(GL_LIGHT1)
+        glEnable(GL_LIGHT2)
+        glEnable(GL_LIGHT3)
         glEnable(GL_LIGHTING)
         # 开启深度测试
         glEnable(GL_DEPTH_TEST)
+
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, fNoLight)
+
+        glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, 90)
+        
+        glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient)
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse)
+        glLightfv(GL_LIGHT2, GL_SPECULAR, light_specular)
+        glLightfv(GL_LIGHT3, GL_POSITION, light_position)
+
+        glEnable(GL_NORMALIZE)
         # 开始颜色追踪
         glEnable(GL_COLOR_MATERIAL)
         # 设置颜色追踪的材料属性
         glColorMaterial(GL_FRONT, GL_DIFFUSE)
+
         # glColorMaterial(GL_FRONT, GL_SPECULAR)
-        glEnable(GL_NORMALIZE)
+        # glColorMaterial(GL_FRONT, GL_AMBIENT)
 
         glShadeModel(GL_SMOOTH)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+         # 启用混合
+        glEnable(GL_BLEND)
+         # 启用点平滑处理
+        glEnable(GL_POINT_SMOOTH)
+         # 设置为画面最优的方式
+        glHint(GL_POINT_SMOOTH_HINT, GL_NICEST)
+         # 启用直线平滑处理
+        glEnable(GL_LINE_SMOOTH)
+         # 设置为画面最优的方式
+        glHint(GL_LINE_SMOOTH_HINT, GL_NICEST)
+         # 启用多边形平滑处理
+        glEnable(GL_POLYGON_SMOOTH)
+         # 设置为画面最优的方式
+        glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST)
         glClearColor(0.0, 0.0, 0.0, 1.0)
+
 
     def paintGL(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)

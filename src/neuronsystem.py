@@ -2,10 +2,12 @@
 
 import math
 
+from PIL import ImageGrab
 from OpenGL.GL import *
 from OpenGL.GLU import *
 from PyQt5.QtWidgets import QOpenGLWidget
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QSize, QTimer
+
 
 class neurons(QOpenGLWidget):
     xRotationChanged = pyqtSignal(int)
@@ -14,7 +16,8 @@ class neurons(QOpenGLWidget):
     xTranslationChanged = pyqtSignal(int)
     yTranslationChanged = pyqtSignal(int)
     zTranslationChanged = pyqtSignal(int)
-    def __init__(self, parent = None):
+
+    def __init__(self, parent=None):
         super(neurons, self).__init__(parent)
         self.xRot = 0
         self.yRot = 0
@@ -23,7 +26,7 @@ class neurons(QOpenGLWidget):
         self.yTran = 0
         self.zTran = 0
         self.lastPos = QPoint()
-        self.color = [(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
+        self.color = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.8, 0.6, 0.0)]
         self.coords = 0
         self.gRot = 0
         self.filepath = None
@@ -33,9 +36,10 @@ class neurons(QOpenGLWidget):
         self.flag = False
         self.style = 0
         self.mode = GLU_FILL
-        # timer = QTimer(self)
-        # timer.timeout.connect(self.advance)
-        # timer.start(50)
+
+    # timer = QTimer(self)
+    # timer.timeout.connect(self.advance)
+    # timer.start(50)
     def clear(self):
         self.xRot = 0
         self.yRot = 0
@@ -44,7 +48,7 @@ class neurons(QOpenGLWidget):
         self.yTran = 0
         self.zTran = 0
         self.lastPos = QPoint()
-        self.color = [(1.0,0.0,0.0),(0.0,1.0,0.0),(0.8,0.6,0.0)]
+        self.color = [(1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.8, 0.6, 0.0)]
         self.coords = 0
         self.gRot = 0
         self.filepath = None
@@ -58,10 +62,10 @@ class neurons(QOpenGLWidget):
     def setmode(self, mode):
         self.mode = mode
 
-    def changestyle(self,style):
+    def changestyle(self, style):
         self.style = style
 
-    def setpath(self,dir):
+    def setpath(self, dir):
         self.filepath = dir
 
     def minimumSizeHint(self):
@@ -71,40 +75,49 @@ class neurons(QOpenGLWidget):
         return QSize(450, 580)
 
     def resize(self):
-        return QSize(450*self.scale,580*self.scale)
+        return QSize(450 * self.scale, 580 * self.scale)
 
     def initializeGL(self):
         # 数据中有两个根房室如何解决？？？
+        tag = False
         self.coords = 0
         if self.filepath is not None:
-            self.neuron,self.coords = self.loaddata(self.filepath)
+            self.neuron, self.coords = self.loaddata(self.filepath)
             if self.style == 0:
                 self.object = self.makeObject(self.mode)
+                tag = True
             else:
                 self.object = self.skeleton()
+                tag = False
         else:
-            self.object=None
-        lightPos = (0.5, 0.5, 0.5, 1.0)
+            self.object = None
+        mat_shininess = {50.0}
+        mat_specular = {1.0, 1.0, 1.0, 1.0}
+
+        llightPos = (0.5, 0.5, 0.5, 1.0)
         light_ambient = (0.0, 0.0, 0.0, 1.0)
         light_diffuse = (1.0, 1.0, 1.0, 1.0)
-        light_specular = (1.0, 1.0, 1.0, 1.0)
-        glLightfv(GL_LIGHT1, GL_SPOT_CUTOFF, 45)
-        # glLightfv(GL_LIGHT1, GL_POSITION, lightPos)
-        # glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient)
-        glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse)
-        # glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular)
-        glEnable(GL_LIGHT1)
+        light_specular = (0.0, 1.0, 1.0, 1.0)
+
+        # glMaterialfv(GL_FRONT, GL_POSITION,mat_specular)
+        # glMaterialfv(GL_FRONT, GL_AMBIENT,mat_shininess)
+
+        glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, 45)
+        # glLightfv(GL_LIGHT0, GL_POSITION, lightPos)
+        # glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient)
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse)
+        # glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular)
+        glEnable(GL_LIGHT0)
         glEnable(GL_LIGHTING)
         # 开启深度测试
         glEnable(GL_DEPTH_TEST)
         # 开始颜色追踪
         glEnable(GL_COLOR_MATERIAL)
         # 设置颜色追踪的材料属性
-        # glColorMaterial(GL_FRONT, GL_POSITION)
-        # glColorMaterial(GL_FRONT, GL_AMBIENT)
         glColorMaterial(GL_FRONT, GL_DIFFUSE)
         # glColorMaterial(GL_FRONT, GL_SPECULAR)
         glEnable(GL_NORMALIZE)
+
         glShadeModel(GL_SMOOTH)
         glClearColor(0.0, 0.0, 0.0, 1.0)
 
@@ -140,12 +153,12 @@ class neurons(QOpenGLWidget):
         glPopMatrix()
 
     def resizeGL(self, width, height):
-        glViewport(0,0,width,height)
+        glViewport(0, 0, width, height)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glColor3f(1.0, 0.0, 0.0)
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
-        if self.coords!=0:
+        if self.coords != 0:
             glOrtho(-1 * self.coords, self.coords, -1 * self.coords, self.coords, -1 * self.coords, self.coords)
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
@@ -154,7 +167,7 @@ class neurons(QOpenGLWidget):
     def loaddata(self, filepath):
         coords = 0
         if filepath is None or filepath == '':
-            return None,0
+            return None, 0
         with open(filepath) as f:
             lines = f.readlines()
             f.close()
@@ -183,10 +196,10 @@ class neurons(QOpenGLWidget):
                 coords = max(coords, neuron[cnt][2])
                 coords = max(coords, neuron[cnt][3])
                 cnt += 1
-                # print(neuron[float(data[0])])
-        return neuron,coords
+            # print(neuron[float(data[0])])
+        return neuron, coords
 
-    def makeObject(self,mode=GLU_FILL):
+    def makeObject(self, mode=GLU_FILL):
         if self.neuron is not None:
             genList = glGenLists(1)
             glNewList(genList, GL_COMPILE)
@@ -206,7 +219,7 @@ class neurons(QOpenGLWidget):
                     glTranslatef(self.neuron[i][1], self.neuron[i][2], self.neuron[i][3])
                     my_quad = gluNewQuadric()
                     gluQuadricDrawStyle(my_quad, mode)
-                    gluSphere(my_quad,self.neuron[i][4], 32, 16)
+                    gluSphere(my_quad, self.neuron[i][4], 32, 16)
                     glPopMatrix()
                 else:
                     # 远端顶点
@@ -222,7 +235,7 @@ class neurons(QOpenGLWidget):
                     # 圆柱半径
                     radius = self.neuron[i][4]
                     # 圆台底半径
-                    dradius = self.neuron[i-1][4]
+                    dradius = self.neuron[i - 1][4]
                     # 目标圆柱中心轴向量
                     bx = dx - sx
                     by = dy - sy
@@ -235,9 +248,9 @@ class neurons(QOpenGLWidget):
                     pz = sz + dis
                     # 计算平移向量与目标的向量的法向量(线性代数：计算两向量的法向量)
                     '''
-                        0  0  dis 0  0  dis
-                        bx by bz  bx by bz
-                    '''
+						0  0  dis 0  0  dis
+						bx by bz  bx by bz
+					'''
                     fx = -1 * by * dis
                     fy = dis * bx
                     fz = 0
@@ -257,13 +270,17 @@ class neurons(QOpenGLWidget):
                     gluCylinder(quadric, radius, radius, dis, 16, 12)
                     glPopMatrix()
                 i = i + 1
-                if self.neuron[i][5] != i-1:
-                    glColor3f(self.color[k%3][0], self.color[k%3][1], self.color[k%3][2])
+                if self.neuron[i][5] != i - 1:
+                    my_quad = gluNewQuadric()
+                    gluQuadricDrawStyle(my_quad, mode)
+                    gluSphere(my_quad, self.neuron[i - 1][4], 32, 16)
+                    glColor3f(self.color[k % 3][0], self.color[k % 3][1], self.color[k % 3][2])
                     k = k + 1
             # self.coords = self.coords + 100
             glMatrixMode(GL_PROJECTION)
             glLoadIdentity()
-            glOrtho(-1 * self.coords, self.coords, -1 * self.coords,self.coords, -1 * self.coords, self.coords)
+            # gluPerspective(45.0, 1.0, 1.0, 20.0);
+            glOrtho(-1 * self.coords, self.coords, -1 * self.coords, self.coords, -1 * self.coords, self.coords)
             gluLookAt(1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
             glMatrixMode(GL_MODELVIEW)
             glLoadIdentity()
@@ -299,8 +316,8 @@ class neurons(QOpenGLWidget):
                 sz = self.neuron[self.neuron[i][5]][3]
                 glPushMatrix()
                 glBegin(GL_LINES)
-                glVertex3f(dx,dy,dz)
-                glVertex3f(sx,sy,sz)
+                glVertex3f(dx, dy, dz)
+                glVertex3f(sx, sy, sz)
                 glEnd()
                 glPopMatrix()
                 i = i + 1
@@ -318,7 +335,6 @@ class neurons(QOpenGLWidget):
             glFlush()
             glEndList()
             return genList
-
 
     def setXRotation(self, angle):
         angle = self.normalizeAngle(angle)
@@ -340,6 +356,7 @@ class neurons(QOpenGLWidget):
             self.zRot = angle
             self.zRotationChanged.emit(angle)
             self.update()
+
     # 点击--旋转
     def mousePressEvent(self, event):
         self.lastPos = event.localPos()
@@ -368,21 +385,21 @@ class neurons(QOpenGLWidget):
                 self.scale = self.scale * 2
             self.coords = self.coords * self.scale
 
-    def setXtranslation(self,value):
+    def setXtranslation(self, value):
         value = self.normalizeValue(value)
         if value != self.xTran:
             self.xTran = value
             self.xTranslationChanged.emit(value)
             self.update()
 
-    def setYtranslation(self,value):
+    def setYtranslation(self, value):
         value = self.normalizeValue(value)
         if value != self.yTran:
             self.yTran = value
             self.yTranslationChanged.emit(value)
             self.update()
 
-    def setZtranslation(self,value):
+    def setZtranslation(self, value):
         value = self.normalizeValue(value)
         if value != self.zTran:
             self.zTran = value
@@ -397,9 +414,12 @@ class neurons(QOpenGLWidget):
         return angle
 
     def normalizeValue(self, value):
-        while value < -1000*16:
-            value += 2000*6
-        while value > 1000*16:
-            value -= 2000*16
+        while value < -1000 * 16:
+            value += 2000 * 6
+        while value > 1000 * 16:
+            value -= 2000 * 16
         return value
 
+    def saveImage(self):
+        pic = ImageGrab.grab()
+        pic.save('1.bmp')

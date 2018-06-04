@@ -46,6 +46,7 @@ class Ui_MainWindow(QWidget):
         self.glWidgetArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.glWidgetArea.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.glWidgetArea.setSizePolicy(QSizePolicy.Ignored,QSizePolicy.Ignored)
+        self.save=QtWidgets.QPushButton()
 
         self.vertical_bar = self.glWidgetArea.verticalScrollBar()
         self.horizontal_bar = self.glWidgetArea.horizontalScrollBar()
@@ -67,10 +68,12 @@ class Ui_MainWindow(QWidget):
         self.Line.clicked.connect(self.line_click)
         self.Surface.clicked.connect(self.surface_click)
         self.choice.clicked.connect(self.choice_click)
+        self.save.clicked.connect(self.save_click)
 
         layout.addWidget(self.textBrowser, 2, 2, 3, 49)
         layout.addWidget(self.pushButton, 2, 52, 3, 8)
         layout.addWidget(self.choice, 2, 62, 3, 5)
+        # layout.addWidget(self.save, 2, 67, 3, 3)
         layout.addWidget(self.glWidgetArea, 6, 2, 45, 58)
         layout.addWidget(self.xSlider, 52, 2, 3, 58)
         layout.addWidget(self.ySlider, 55, 2, 3, 58)
@@ -119,11 +122,25 @@ class Ui_MainWindow(QWidget):
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
+        self.save.setText(_translate("Form", "save"))
+        self.save.setStyleSheet('''
+            QPushButton{
+                border-radius: 5%;
+                background-color:#DB7093;
+                font-size: 14px;
+            
+            }
+            '''
+            '''
+            QPushButton:hover{
+              padding-right: 4px;
+            }
+            ''')
         self.pushButton.setText(_translate("Form", "Browse"))
         self.pushButton.setStyleSheet('''
             QPushButton{
                 border-radius: 5%;
-                background-color:#FEAE1B;
+                background-color:#6495ED;
                 font-size: 14px;
 
             }
@@ -198,6 +215,8 @@ class Ui_MainWindow(QWidget):
         self.glWidget.clear()
         self.glWidget.setpath(dir)
         self.glWidget.initializeGL()
+        self.glWidget.changestyle(1)
+        self.choice.setText("真实感")
 
     def choice_click(self):
         if self.choice.text() == "真实感":
@@ -219,6 +238,9 @@ class Ui_MainWindow(QWidget):
     def surface_click(self):
         self.glWidget.setmode(GLU_FILL)
         self.glWidget.initializeGL()
+
+    def save_click(self):
+        self.glWidget.saveImage()
 
     def eventFilter(self, source, event):
         if event.type() == QEvent.MouseMove:
